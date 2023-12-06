@@ -1,0 +1,63 @@
+---
+title: "HW 6"
+author: "Nhu Nguyen"
+date: "2023-12-06"
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+library(modelr)
+library(mgcv)
+library(dplyr)
+library(knitr)
+
+set.seed(1)
+```
+
+# Problem 1
+
+# Problem 2
+
+importing data
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2022-01-01",
+    date_max = "2022-12-31") |>
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) |>
+  select(name, id, everything())
+```
+
+creating 5000 bootstrap sample
+```{r}
+bootstrap_df = weather_df |> 
+  modelr::bootstrap(n = 5000) |> 
+  mutate(
+    models = map(strap, \(df) lm(tmax ~ tmin + prcp, data = df)),
+    results = map(models, broom::tidy),
+    rsq = map(models, broom::glance)) |> 
+  select(results, .id, rsq) |> 
+  unnest(results) |> 
+  filter(term %in% c("tmin", "prcp")) |> 
+  group_by(.id) |> 
+  mutate(beta1xbeta2 = prod(estimate),
+         log_beta_product = log(beta1xbeta2)) |> 
+  select(log_beta_product, rsq) |> 
+  unnest(rsq) |> 
+  janitor::clean_names() |> 
+  select(log_beta_product, id, r_squared) |> 
+  unique()
+```
+
+### plotting distribution of estimates
+log of beta product
+```{r}
+bootstrap_df |> 
+  ggplot(aes(x = log_beta_product)) + geom_density()
+```
