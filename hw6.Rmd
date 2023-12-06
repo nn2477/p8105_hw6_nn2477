@@ -15,9 +15,9 @@ library(knitr)
 set.seed(1)
 ```
 
-# Problem 1
+# problem 1
 
-# Problem 2
+# problem 2
 
 importing data
 ```{r}
@@ -90,3 +90,34 @@ bootstrap_conf |> knitr::kable()
 The 95% confidence interval for the log of the beta product is (`r bootstrap_conf$beta_low`, `r bootstrap_conf$beta_high`).
 
 The 95% confidence interval for r-squared is (`r bootstrap_conf$rs_low`, `r bootstrap_conf$rs_high`).
+
+# problem 3 
+
+importing & cleaning dataset 
+```{r}
+bw_df = read.csv("birthweight.csv")
+
+bw_df = bw_df |> 
+  janitor::clean_names() |> 
+  mutate(
+    babysex = as.factor(babysex),
+    frace = as.factor(frace),
+    malform = as.factor(malform),
+    mrace = as.factor(mrace)) |> 
+  drop_na()
+```
+
+proposed regression model
+```{r}
+fit = lm(bwt ~ gaweeks + smoken + delwt + wtgain, data = bw_df)
+
+fit |>
+  broom::tidy() |>
+  select(term, estimate, p.value) |>
+  knitr::kable(digits=3)
+
+summary(fit)
+```
+
+
+the proposed regression model is based on biological factors that have been proven to have an effect on the baby's weight, including `gaweeks`, gestational age in weeks, `smoken`, average number of cigarettes smoked per day during pregnancy, `delwt`, mother's weight at delivery in pounds, and `wtgain`, mother's weight gain during pregnancy in pounds. as the p0values for the predictors are all less than 0.01, the hypothesized predictors do not need to be removed from the model.

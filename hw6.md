@@ -40,9 +40,9 @@ library(knitr)
 set.seed(1)
 ```
 
-# Problem 1
+# problem 1
 
-# Problem 2
+# problem 2
 
 importing data
 
@@ -151,3 +151,73 @@ The 95% confidence interval for the log of the beta product is
 (-8.9815594, -4.6016727).
 
 The 95% confidence interval for r-squared is (0.8885495, 0.9406812).
+
+# problem 3
+
+importing & cleaning dataset
+
+``` r
+bw_df = read.csv("birthweight.csv")
+
+bw_df = bw_df |> 
+  janitor::clean_names() |> 
+  mutate(
+    babysex = as.factor(babysex),
+    frace = as.factor(frace),
+    malform = as.factor(malform),
+    mrace = as.factor(mrace)) |> 
+  drop_na()
+```
+
+proposed regression model
+
+``` r
+fit = lm(bwt ~ gaweeks + smoken + delwt + wtgain, data = bw_df)
+
+fit |>
+  broom::tidy() |>
+  select(term, estimate, p.value) |>
+  knitr::kable(digits=3)
+```
+
+| term        | estimate | p.value |
+|:------------|---------:|--------:|
+| (Intercept) |  -39.244 |   0.671 |
+| gaweeks     |   60.852 |   0.000 |
+| smoken      |   -7.044 |   0.000 |
+| delwt       |    4.605 |   0.000 |
+| wtgain      |    5.132 |   0.000 |
+
+``` r
+summary(fit)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = bwt ~ gaweeks + smoken + delwt + wtgain, data = bw_df)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -1758.62  -279.22     4.72   293.17  1505.70 
+    ## 
+    ## Coefficients:
+    ##             Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept) -39.2437    92.3148  -0.425    0.671    
+    ## gaweeks      60.8523     2.1695  28.049  < 2e-16 ***
+    ## smoken       -7.0436     0.9127  -7.718 1.46e-14 ***
+    ## delwt         4.6049     0.3368  13.674  < 2e-16 ***
+    ## wtgain        5.1317     0.6851   7.491 8.25e-14 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 444.7 on 4337 degrees of freedom
+    ## Multiple R-squared:  0.2468, Adjusted R-squared:  0.2461 
+    ## F-statistic: 355.3 on 4 and 4337 DF,  p-value: < 2.2e-16
+
+the proposed regression model is based on biological factors that have
+been proven to have an effect on the baby’s weight, including `gaweeks`,
+gestational age in weeks, `smoken`, average number of cigarettes smoked
+per day during pregnancy, `delwt`, mother’s weight at delivery in
+pounds, and `wtgain`, mother’s weight gain during pregnancy in pounds.
+as the p0values for the predictors are all less than 0.01, the
+hypothesized predictors do not need to be removed from the model.
