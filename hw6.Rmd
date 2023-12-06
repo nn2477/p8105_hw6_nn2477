@@ -119,5 +119,49 @@ fit |>
 summary(fit)
 ```
 
-
 the proposed regression model is based on biological factors that have been proven to have an effect on the baby's weight, including `gaweeks`, gestational age in weeks, `smoken`, average number of cigarettes smoked per day during pregnancy, `delwt`, mother's weight at delivery in pounds, and `wtgain`, mother's weight gain during pregnancy in pounds. as the p0values for the predictors are all less than 0.01, the hypothesized predictors do not need to be removed from the model.
+
+plotting residuals against fitted values
+```{r}
+bw_df |> 
+  modelr::add_residuals(fit) |> 
+  modelr::add_predictions(fit) |> 
+  ggplot(aes(x = resid, y = pred)) +
+  geom_point(alpha = 0.5)
+```
+the residual plot displays the majority of residual values being clustered around 0, with the avg. predicted birth weight hovering around 3250 grams
+
+
+comparing model to two others 
+```{r}
+cv_df =
+  crossv_mc(bw_df, 100) |> 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble))
+```
+
+
+```{r}
+cv_df = cv_df |> 
+  mutate(
+    model_prop = map(train, \(df) lm(bwt ~ gaweeks + smoken + delwt + wtgain, data = df)),
+    model_1 = map(train, \(df) lm(bwt ~ blength + gaweeks, data = df)),
+    model_2 = map(train, \(df) lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = df))) |> 
+  mutate(
+    rmse_prop = map2_dbl(model_prop, test, \(mod, df) rmse(model = mod, data = df)),
+    rmse_1 = map2_dbl(model_1, test, \(mod, df) rmse(model = mod, data = df)),
+    rmse_2 = map2_dbl(model_2, test, \(mod, df) rmse(model = mod, data = df)))
+
+cv_df |> 
+  select(starts_with("rmse")) |> 
+  pivot_longer(
+    everything(),
+    names_to = "model",
+    values_to = "rmse",
+    names_prefix = "rmse_") |> 
+  ggplot(aes(x = model, y = rmse)) + geom_violin()
+```
+
+the plot shows the RMSE value distribution for the three different models. model 2 (comparison model for interaction terms) has the lowest RMSE values, indicating it has a better predictive performance than the proposed model and the model with only the main effects. the best fit is the model with the three-way interaction. 
+
