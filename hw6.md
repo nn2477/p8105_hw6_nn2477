@@ -109,4 +109,45 @@ bootstrap_df |>
 
     ## Warning: Removed 3361 rows containing non-finite values (`stat_density()`).
 
-![](hw6_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](hw6_files/figure-gfm/unnamed-chunk-4-1.png)<!-- --> This figure
+displays the distribution of the estimates of the log of the product of
+betas 1 and 2, which is left skewed and unimodal with a peak at around
+-5.75.
+
+r-squared
+
+``` r
+bootstrap_df |> 
+  ggplot(aes(x = r_squared)) + geom_density()
+```
+
+![](hw6_files/figure-gfm/unnamed-chunk-5-1.png)<!-- --> This figure
+displays the distribution of the estimates of r-squared values, which is
+slightly left skewed (although almost normal) and unimodal with a peak
+at around 0.916.
+
+95% CI
+
+``` r
+bootstrap_conf = bootstrap_df |> 
+  unique() |>
+  ungroup() |> 
+  select(-id) |> 
+  summarize(beta_mean = mean(log_beta_product, na.rm = TRUE),
+            beta_low = quantile(log_beta_product, 0.025, na.rm = TRUE),
+            beta_high = quantile(log_beta_product, 0.975, na.rm = TRUE),
+            rs_mean = mean(r_squared),
+            rs_low = quantile(r_squared, 0.025),
+            rs_high = quantile(r_squared, 0.975))
+
+bootstrap_conf |> knitr::kable()
+```
+
+| beta_mean |  beta_low | beta_high |   rs_mean |    rs_low |   rs_high |
+|----------:|----------:|----------:|----------:|----------:|----------:|
+| -6.089813 | -8.981559 | -4.601673 | 0.9168349 | 0.8885495 | 0.9406812 |
+
+The 95% confidence interval for the log of the beta product is
+(-8.9815594, -4.6016727).
+
+The 95% confidence interval for r-squared is (0.8885495, 0.9406812).

@@ -61,3 +61,32 @@ log of beta product
 bootstrap_df |> 
   ggplot(aes(x = log_beta_product)) + geom_density()
 ```
+This figure displays the distribution of the estimates of the log of the product of betas 1 and 2, which is left skewed and unimodal with a peak at around -5.75.
+
+
+r-squared
+```{r}
+bootstrap_df |> 
+  ggplot(aes(x = r_squared)) + geom_density()
+```
+This figure displays the distribution of the estimates of r-squared values, which is slightly left skewed (although almost normal) and unimodal with a peak at around 0.916.
+
+
+95% CI
+```{r}
+bootstrap_conf = bootstrap_df |> 
+  unique() |>
+  ungroup() |> 
+  select(-id) |> 
+  summarize(beta_mean = mean(log_beta_product, na.rm = TRUE),
+            beta_low = quantile(log_beta_product, 0.025, na.rm = TRUE),
+            beta_high = quantile(log_beta_product, 0.975, na.rm = TRUE),
+            rs_mean = mean(r_squared),
+            rs_low = quantile(r_squared, 0.025),
+            rs_high = quantile(r_squared, 0.975))
+
+bootstrap_conf |> knitr::kable()
+```
+The 95% confidence interval for the log of the beta product is (`r bootstrap_conf$beta_low`, `r bootstrap_conf$beta_high`).
+
+The 95% confidence interval for r-squared is (`r bootstrap_conf$rs_low`, `r bootstrap_conf$rs_high`).
